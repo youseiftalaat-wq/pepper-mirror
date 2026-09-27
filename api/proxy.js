@@ -9,8 +9,7 @@ export default async function handler(req, res) {
 
   try {
     const auth = req.headers['authorization'] || '';
-    const body = JSON.stringify(req.body);
-
+    
     const response = await fetch('https://orders.pepper.deliveryhero.io/graphql?crunch=1', {
       method: 'POST',
       headers: {
@@ -18,13 +17,21 @@ export default async function handler(req, res) {
         'Authorization': auth,
         'X-Requested-With': 'gfs-order-management@8.81.1',
         'Accept': '*/*',
+        'Origin': 'https://orders.pepper.deliveryhero.io',
+        'Referer': 'https://orders.pepper.deliveryhero.io/',
       },
-      body: body,
+      body: JSON.stringify(req.body),
     });
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    const text = await response.text();
+    
+    try {
+      const data = JSON.parse(text);
+      return res.status(200).json(data);
+    } catch {
+      return res.status(500).json({ error: 'Invalid JSON from Pepper', raw: text.substring(0, 500) });
+    }
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message, stack: e.stack });
   }
 }
