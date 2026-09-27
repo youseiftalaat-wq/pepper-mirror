@@ -2,24 +2,26 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const auth = req.headers['authorization'];
-  
   try {
+    const auth = req.headers['authorization'] || '';
+    const body = JSON.stringify(req.body);
+
     const response = await fetch('https://orders.pepper.deliveryhero.io/graphql?crunch=1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': auth,
         'X-Requested-With': 'gfs-order-management@8.81.1',
+        'Accept': '*/*',
       },
-      body: JSON.stringify(req.body),
+      body: body,
     });
-    
+
     const data = await response.json();
     return res.status(200).json(data);
   } catch (e) {
