@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pepper Mirror</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #e8e8e8; min-height: 100vh; }
+#token-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.token-card { background: #fff; border-radius: 12px; padding: 32px; max-width: 520px; width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+.logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.logo .dot { width: 28px; height: 28px; background: #e63c2f; border-radius: 50%; }
+.logo span { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+.how-to { background: #f9f5ee; border-radius: 8px; padding: 14px; margin-bottom: 20px; }
+.how-to p { font-size: 12px; font-weight: 600; color: #7a4f00; margin-bottom: 6px; }
+.how-to ol { padding-left: 18px; }
+.how-to li { font-size: 12px; color: #555; line-height: 2.2; }
+.how-to code { background: #e8e8e8; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+h2 { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+.sub { font-size: 13px; color: #666; margin-bottom: 16px; }
+textarea { width: 100%; height: 110px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 12px; font-family: monospace; resize: none; color: #1a1a1a; outline: none; }
+textarea:focus { border-color: #c8860a; }
+.btn { margin-top: 14px; width: 100%; padding: 13px; background: #c8860a; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn:hover { background: #a06d08; }
+.err { color: #d32f2f; font-size: 12px; margin-top: 10px; padding: 8px 12px; background: #ffebee; border-radius: 6px; display: none; }
+#dashboard { display: none; }
+.top-bar { background: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; flex-wrap: wrap; gap: 10px; }
+.top-left { display: flex; align-items: center; gap: 12px; }
+.pepper-dot { width: 22px; height: 22px; background: #e63c2f; border-radius: 50%; flex-shrink: 0; }
+select { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600; color: #1a1a1a; background: #fff; cursor: pointer; min-width: 220px; }
+.live { display: inline-flex; align-items: center; gap: 5px; background: #e8f5e9; color: #2e7d32; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+.live-dot { width: 7px; height: 7px; background: #43a047; border-radius: 50%; animation: blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.clock { font-size: 13px; color: #555; font-weight: 500; }
+.btn-sm { font-size: 11px; color: #c8860a; background: none; border: 1px solid #c8860a; border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.refresh-bar { background: #fff8e1; padding: 5px 16px; font-size: 11px; color: #7a4f00; display: flex; align-items: center; justify-content: space-between; }
+.progress-track { width: 160px; height: 4px; background: #e0d5b0; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #c8860a; border-radius: 2px; transition: width 1s linear; }
+.stats { display: flex; gap: 10px; padding: 10px 16px; background: #ececec; flex-wrap: wrap; }
+.stat { background: #fff; border-radius: 8px; padding: 8px 16px; min-width: 110px; border: 0.5px solid #ddd; }
+.stat-label { font-size: 10px; color: #888; margin-bottom: 2px; }
+.stat-val { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+.stat-val.red { color: #d32f2f; }
+.stat-val.orange { color: #c8860a; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; }
+.col { padding: 12px; background: #ececec; }
+.col:first-child { border-right: 1px solid #d0d0d0; }
+.col-header { font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .5px; display: flex; align-items: center; justify-content: space-between; }
+.col-count { font-size: 12px; font-weight: 600; background: #1a1a1a; color: #fff; padding: 2px 8px; border-radius: 10px; }
+.card { background: #fff; border-radius: 6px; border: 0.5px solid #ccc; padding: 10px 12px; margin-bottom: 8px; }
+.prep-card { display: flex; align-items: center; justify-content: space-between; }
+.rfp-card { display: grid; grid-template-columns: 1fr auto auto; gap: 0 10px; align-items: center; }
+.order-id { font-size: 11px; color: #888; }
+.order-num { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.phone { font-size: 11px; color: #888; margin-top: 2px; }
+.awt-block { text-align: right; }
+.awt-label { font-size: 10px; color: #888; }
+.awt-val { font-size: 13px; font-weight: 700; }
+.red { color: #d32f2f; }
+.urgent { background: #fff3e0; border-left: 4px solid #c8860a; padding: 8px 12px; margin-bottom: 10px; border-radius: 0 6px 6px 0; font-size: 12px; color: #7a4f00; font-weight: 600; }
+.empty { text-align: center; padding: 32px; color: #aaa; font-size: 13px; background: #fff; border-radius: 6px; border: 0.5px dashed #ccc; }
+.loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+.err-bar { background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; padding: 12px 16px; margin: 12px; font-size: 13px; color: #c62828; }
+@media (max-width: 600px) { .columns { grid-template-columns: 1fr; } .col:first-child { border-right: none; border-bottom: 1px solid #d0d0d0; } }
+</style>
+</head>
+<body>
+
+<div id="token-screen">
+  <div class="token-card">
+    <div class="logo"><div class="dot"></div><span>Pepper Mirror</span></div>
+    <div class="how-to">
+      <p>How to get your token:</p>
+      <ol>
+        <li>Open <code>Pepper</code> in Chrome → press <code>F12</code></li>
+        <li>Click <code>Network</code> → <code>Fetch/XHR</code></li>
+        <li>Click any <code>graphql?crunch=1</code> request</li>
+        <li>Go to <code>Headers</code> → find <code>Authorization</code></li>
+        <li>Copy everything after <code>Bearer </code></li>
+      </ol>
+    </div>
+    <h2>Paste your Bearer token</h2>
+    <p class="sub">Used only to fetch order data — never stored anywhere.</p>
+    <textarea id="token-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+    <div class="err" id="token-err"></div>
+    <button class="btn" id="btn-connect" onclick="connect()">Connect to Pepper</button>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="pepper-dot"></div>
+      <select id="zone-sel" onchange="switchZone()"></select>
+      <div class="live"><div class="live-dot"></div>LIVE</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="clock" id="clock"></span>
+      <button class="btn-sm" onclick="showToken()">Update token</button>
+    </div>
+  </div>
+  <div class="refresh-bar">
+    <span>Next refresh in <strong id="cd">60</strong>s</span>
+    <div class="progress-track"><div class="progress-fill" id="pf" style="width:100%"></div></div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="order-err"></div>
+  <div class="columns">
+    <div class="col">
+      <div class="col-header">In Preparation <span class="col-count" id="pc">0</span></div>
+      <div id="prep-list"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="col">
+      <div class="col-header">Ready for Pickup <span class="col-count" id="rc">0</span></div>
+      <div id="rfp-list"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PROXY = '/api/proxy';
+let token = '', facilities = [], zoneId = '', refreshTimer, cdTimer, cdVal = 60;
+
+const FAC_Q = `query facilities { facilities { nodes { _id name status __typename } __typename } }`;
+const ORD_Q = `query orderData($facilityId: ObjectId!, $status: [OrderStatus!]!, $includeCustomerData: Boolean!, $dateFrom: DateTime) {
+  facility(id: $facilityId) {
+    _id name
+    orders(first: 1000 filter: {status: $status, date: {from: $dateFrom}}) {
+      nodes {
+        _id shortCode status pickupStation
+        history { status timestamp __typename }
+        content {
+          order_id brand_name
+          customer @include(if: $includeCustomerData) {
+            profile { phone name __typename }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}`;
+
+function getDateFrom() {
+  const d = new Date(); d.setDate(d.getDate()-2); d.setHours(22,0,0,0); return d.toISOString();
+}
+
+async function gql(query, variables={}) {
+  const op = (query.match(/query\s+(\w+)/)||[])[1]||'query';
+  const res = await fetch(PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+    body: JSON.stringify({ operationName: op, query, variables })
+  });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0]?.message||'GraphQL error');
+  return json;
+}
+
+async function connect() {
+  const t = document.getElementById('token-input').value.trim().replace(/^Bearer\s+/i,'').trim();
+  if (!t||!t.startsWith('eyJ')) { showErr('Token should start with eyJ'); return; }
+  token = t; hideErr(); setBtn('Connecting...');
+  try {
+    const d = await gql(FAC_Q);
+    const nodes = (d?.data?.facilities?.nodes||[]).filter(f=>f.status==='Active');
+    if (!nodes.length) throw new Error('No active facilities');
+    facilities = nodes;
+    const sel = document.getElementById('zone-sel');
+    sel.innerHTML = facilities.map((f,i)=>`<option value="${f._id}">${f.name}</option>`).join('');
+    zoneId = facilities[0]._id;
+    document.getElementById('token-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    startClock(); loadOrders(); startRefresh();
+  } catch(e) { showErr('Could not connect: '+e.message); setBtn('Connect to Pepper'); }
+}
+
+function switchZone() {
+  zoneId = document.getElementById('zone-sel').value;
+  clearInterval(refreshTimer); clearInterval(cdTimer);
+  loadOrders(); startRefresh();
+}
+
+async function loadOrders() {
+  document.getElementById('prep-list').innerHTML = '<div class="loading">Loading...</div>';
+  document.getElementById('rfp-list').innerHTML = '<div class="loading">Loading...</div>';
+  document.getElementById('order-err').innerHTML = '';
+  try {
+    const d = await gql(ORD_Q, { facilityId: zoneId, status: ['InPreparation','ReadyForPickup'], includeCustomerData: true, dateFrom: getDateFrom() });
+    render(d?.data?.facility?.orders?.nodes||[]);
+  } catch(e) {
+    document.getElementById('order-err').innerHTML = `<div class="err-bar">Could not load orders: ${e.message} — click "Update token"</div>`;
+    document.getElementById('prep-list').innerHTML = '';
+    document.getElementById('rfp-list').innerHTML = '';
+  }
+}
+
+function minsSince(history, status) {
+  const h = [...(history||[])].reverse().find(x=>x.status===status);
+  if (!h) return null;
+  return Math.round((Date.now()-new Date(h.timestamp).getTime())/60000);
+}
+
+function render(orders) {
+  const prep = orders.filter(o=>o.status==='InPreparation');
+  const rfp  = orders.filter(o=>o.status==='ReadyForPickup');
+  const urgent = rfp.filter(o=>(minsSince(o.history,'ReadyForPickup')||0)>=10);
+  const maxAwt = rfp.reduce((m,o)=>Math.max(m,minsSince(o.history,'ReadyForPickup')||0),0);
+  document.getElementById('pc').textContent = prep.length;
+  document.getElementById('rc').textContent = rfp.length;
+  document.getElementById('stats').innerHTML =
+    sc('In Preparation',prep.length,'orange')+sc('Ready for Pickup',rfp.length,'')+
+    sc('Longest wait',maxAwt+' min',maxAwt>=10?'red':'')+sc('Total active',orders.length,'');
+
+  document.getElementById('prep-list').innerHTML = prep.length
+    ? prep.map(o=>{
+        const awt=minsSince(o.history,'InPreparation'), ph=o.content?.customer?.profile?.phone||'';
+        return `<div class="card prep-card"><div><div class="order-id">#${o.shortCode}</div><div class="order-num">${o.content?.order_id||''}</div>${ph?`<div class="phone">${ph}</div>`:''}</div>${awt!==null?`<div class="awt-block"><div class="awt-label">AWT</div><div class="awt-val ${awt>=10?'red':''}">${awt} mins</div></div>`:''}</div>`;
+      }).join('')
+    : '<div class="empty">No orders in preparation</div>';
+
+  const sorted=[...rfp].sort((a,b)=>(minsSince(b.history,'ReadyForPickup')||0)-(minsSince(a.history,'ReadyForPickup')||0));
+  document.getElementById('rfp-list').innerHTML =
+    (urgent.length?`<div class="urgent">⚠ ${urgent.length} order${urgent.length>1?'s':''} waiting over 10 mins — dispatch now!</div>`:'') +
+    (rfp.length?sorted.map(o=>{
+      const awt=minsSince(o.history,'ReadyForPickup'), ph=o.content?.customer?.profile?.phone||'', win=o.pickupStation||'';
+      return `<div class="card rfp-card"><div><div class="order-id">#${o.shortCode}${win?' · '+win:''}</div><div class="order-num">${o.content?.order_id||''}</div>${ph?`<div class="phone">${ph}</div>`:''}</div><div class="awt-block"><div class="awt-label">AWT</div><div class="awt-val ${awt!==null&&awt>=10?'red':''}">${awt!==null?awt+' mins':'-'}</div></div></div>`;
+    }).join(''):'<div class="empty">No orders ready for pickup</div>');
+}
+
+function sc(label,val,cls){return `<div class="stat"><div class="stat-label">${label}</div><div class="stat-val ${cls}">${val}</div></div>`;}
+
+function startRefresh() {
+  cdVal=60; updateCd();
+  refreshTimer=setInterval(()=>{loadOrders();cdVal=60;},60000);
+  cdTimer=setInterval(()=>{if(--cdVal<0)cdVal=60;updateCd();},1000);
+}
+function updateCd(){document.getElementById('cd').textContent=cdVal;document.getElementById('pf').style.width=(cdVal/60*100)+'%';}
+
+function startClock(){
+  function tick(){const n=new Date();let h=n.getHours(),m=String(n.getMinutes()).padStart(2,'0');const ap=h>=12?'PM':'AM';h=h%12||12;document.getElementById('clock').textContent=h+':'+m+' '+ap;}
+  tick();setInterval(tick,10000);
+}
+
+function showToken(){
+  clearInterval(refreshTimer);clearInterval(cdTimer);
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('token-screen').style.display='flex';
+  setBtn('Connect to Pepper');document.getElementById('token-input').value='';
+}
+
+function showErr(msg){const e=document.getElementById('token-err');e.textContent=msg;e.style.display='block';}
+function hideErr(){document.getElementById('token-err').style.display='none';}
+function setBtn(t){document.getElementById('btn-connect').textContent=t;}
+</script>
+</body>
+</html>
